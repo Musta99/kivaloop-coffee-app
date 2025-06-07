@@ -4,6 +4,12 @@
 <dict>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>[Your explanation here]</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+    <string>[Your explanation here]</string>
+	<key>NSCameraUsageDescription</key>
+    <string>[Your explanation here]</string>
+	<key>NSMicrophoneUsageDescription</key>
+    <string>[Your explanation here]</string>
 
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>

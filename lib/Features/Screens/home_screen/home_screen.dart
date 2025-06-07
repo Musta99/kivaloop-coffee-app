@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:image_picker/image_picker.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -173,10 +174,19 @@ class _HomeScreenState extends State<HomeScreen> {
                               Visibility(
                                 visible:
                                     userPosts[index]["isUser"] ? true : false,
-                                child: Icon(
-                                  Iconsax.add_circle5,
-                                  size: 30,
-                                  color: Colors.white,
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    final ImagePicker picker = ImagePicker();
+                                    // Pick an image.
+                                    final XFile? image = await picker.pickImage(
+                                      source: ImageSource.camera,
+                                    );
+                                  },
+                                  child: Icon(
+                                    Iconsax.add_circle5,
+                                    size: 30,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ],

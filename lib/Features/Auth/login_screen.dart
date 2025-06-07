@@ -1,9 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:kivaloop/Features/Screens/shop-partner/shop_partner_dashboard.dart';
+import 'package:kivaloop/Services/Validators/login_form_validator.dart';
 import 'package:kivaloop/bottom_navbar.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -15,6 +19,59 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool isUser = true;
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  Future userAuthentication(String email, String password) async {
+    try {
+      EasyLoading.show();
+      // First check if that user Email contains in UserData or not
+      QuerySnapshot querySnapshot =
+          await FirebaseFirestore.instance
+              .collection("UserData")
+              .where("email", isEqualTo: email)
+              .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        print("User with this email exists.");
+        print(querySnapshot.docs.first["email"]);
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        EasyLoading.showSuccess("Successfully Logged in");
+      } else {
+        print("No user found with this email.");
+        UserCredential userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(email: email, password: password);
+        print(userCredential.user!.uid);
+
+        await FirebaseFirestore.instance
+            .collection("UserData")
+            .doc(userCredential.user!.uid)
+            .set({
+              "email": emailController.text.trim(),
+              "password": passwordController.text.trim(),
+              "createdAt": DateTime.now().toIso8601String(),
+              "userId": userCredential.user!.uid,
+              "isUser": true,
+              "profileImageUrl": "",
+              "userName": "",
+            });
+
+        EasyLoading.showSuccess("Successfully Signed in");
+      }
+      Navigator.push(
+        context,
+        CupertinoPageRoute(builder: (context) => BottomNavbarScreen()),
+      );
+    } catch (err) {
+      EasyLoading.showError(err.toString());
+    } finally {
+      EasyLoading.dismiss();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,51 +165,62 @@ class _LoginScreenState extends State<LoginScreen> {
                   Column(
                     children: [
                       // Email Field
-                      TextFormField(
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Iconsax.sms),
-                          hintText: "Write your email",
-                          hintStyle: GoogleFonts.roboto(
-                            color: Colors.black.withOpacity(0.5),
-                            fontSize: 14,
-                          ),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 20),
+                      Form(
+                        key: formKey,
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              validator: LoginFormValidator().emailValidator,
+                              controller: emailController,
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(Iconsax.sms),
+                                hintText: "Write your email",
+                                hintStyle: GoogleFonts.roboto(
+                                  color: Colors.black.withOpacity(0.5),
+                                  fontSize: 14,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 20),
 
-                      // Password Field
-                      TextFormField(
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Iconsax.key),
-                          hintText: "Write your password",
-                          hintStyle: GoogleFonts.roboto(
-                            color: Colors.black.withOpacity(0.5),
-                            fontSize: 14,
-                          ),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                            // Password Field
+                            TextFormField(
+                              validator: LoginFormValidator().passwordValidator,
+                              controller: passwordController,
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(Iconsax.key),
+                                hintText: "Write your password",
+                                hintStyle: GoogleFonts.roboto(
+                                  color: Colors.black.withOpacity(0.5),
+                                  fontSize: 14,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       SizedBox(height: 10),
@@ -172,14 +240,21 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(height: 20),
 
                   GestureDetector(
-                    onTap: () {
+                    onTap: () async {
                       if (isUser) {
-                        Navigator.push(
-                          context,
-                          CupertinoPageRoute(
-                            builder: (context) => BottomNavbarScreen(),
-                          ),
-                        );
+                        if (formKey.currentState!.validate()) {
+                          // ✅ All fields are valid, proceed
+                          print(
+                            'Form is valid. Proceed with login or next step.',
+                          );
+                          await userAuthentication(
+                            emailController.text.trim(),
+                            passwordController.text.trim(),
+                          );
+                        } else {
+                          // ❌ Some fields are invalid
+                          print('Validation failed. Show errors.');
+                        }
                       } else {
                         Navigator.push(
                           context,
